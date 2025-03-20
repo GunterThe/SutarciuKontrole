@@ -1,6 +1,8 @@
-# SutarciuKontrole
+# Sutarciu Kontrole
 
-To run this program:
-Cd Frontend
-npm install
+To run this program: 
+```
+Cd Frontend 
+npm install 
 npm run dev
+```
