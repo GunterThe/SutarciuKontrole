@@ -4,9 +4,9 @@ public class AppDbContext : DbContext
 {
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
-    public DbSet<Irasas> Irasai { get; set; }
-    public DbSet<Naudotojas> Naudotojai { get; set; }
-    public DbSet<IrasasNaudotojas> IrasasNaudotojai { get; set; }
+    public DbSet<Irasas> Irasas { get; set; }
+    public DbSet<Naudotojas> Naudotojas { get; set; }
+    public DbSet<IrasasNaudotojas> IrasasNaudotojas { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,7 +29,7 @@ public class AppDbContext : DbContext
 
         modelBuilder.Entity<Irasas>()
             .Property(x => x.Dienu_daznumas)
-            .HasDefaultValue(1);
+            .HasDefaultValue(0);
 
         modelBuilder.Entity<Irasas>()
             .Property(x => x.Archyvuotas)

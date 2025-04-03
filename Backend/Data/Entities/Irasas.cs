@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -11,7 +9,7 @@ public class Irasas
 
     [Required]
     [StringLength(20)]
-    public string Id_dok { get; set; }
+    public string Id_dokumento { get; set; }
 
     [Required]
     [StringLength(100)]
@@ -27,9 +25,13 @@ public class Irasas
     public int Dienos_pries { get; set; } = 0;
 
     [Required]
-    public int Dienu_daznumas { get; set; } = 1;
+    public int Dienu_daznumas { get; set; } = 0;
 
     public bool Archyvuotas { get; set; } = false;
+    public DateTime Kita_data { get; set; }
+    [Required]
+    [StringLength(100)]
+    public string Pastas_kreiptis { get; set; }
 
     public ICollection<IrasasNaudotojas> Naudotojai { get; set; }
 }
