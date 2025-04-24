@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.AspNetCore.Authorization;
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class NaudotojasController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -31,6 +32,23 @@ public class NaudotojasController : ControllerBase
         }
 
         return naudotojas;
+    }
+
+    // GET: api/Naudotojas/{id}/Irasai
+    [HttpGet("{id}/Irasai")]
+    public async Task<ActionResult<IEnumerable<IrasasNaudotojas>>> GetNaudotojasIrasai(string id, bool Archyvuotas)
+    {
+        var naudotojas = await _context.Naudotojas
+            .Include(n => n.Irasai.Where(inu => inu.Irasas.Archyvuotas == Archyvuotas))
+                .ThenInclude(inu => inu.Irasas)
+            .FirstOrDefaultAsync(n => n.Id == id);
+
+        if (naudotojas == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(naudotojas.Irasai);
     }
 
     // POST: api/Naudotojas
@@ -69,22 +87,6 @@ public class NaudotojasController : ControllerBase
                 throw;
             }
         }
-
-        return NoContent();
-    }
-
-    // DELETE: api/Naudotojas/{id}
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteNaudotojas(string id)
-    {
-        var naudotojas = await _context.Naudotojas.FindAsync(id);
-        if (naudotojas == null)
-        {
-            return NotFound();
-        }
-
-        _context.Naudotojas.Remove(naudotojas);
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }

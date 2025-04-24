@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class IrasasController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -31,6 +33,23 @@ public class IrasasController : ControllerBase
         }
 
         return irasas;
+    }
+
+    // GET: api/Irasas/{id}
+    [HttpGet("{id}/Naudotojai")]
+    public async Task<ActionResult<Irasas>> GetIrasasNaudotojai(int id)
+    {
+        var irasas = await _context.Irasas
+        .Include(i => i.Naudotojai.Where(inu => inu.Prekes_Adminas))
+            .ThenInclude(inu => inu.Naudotojas)
+        .FirstOrDefaultAsync(i => i.Id == id);
+
+        if (irasas == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(irasas.Naudotojai);
     }
 
     // POST: api/Irasas
@@ -76,22 +95,6 @@ public class IrasasController : ControllerBase
                 throw;
             }
         }
-
-        return NoContent();
-    }
-
-    // DELETE: api/Irasas/{id}
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteIrasas(int id)
-    {
-        var irasas = await _context.Irasas.FindAsync(id);
-        if (irasas == null)
-        {
-            return NotFound();
-        }
-
-        _context.Irasas.Remove(irasas);
-        await _context.SaveChangesAsync();
 
         return NoContent();
     }

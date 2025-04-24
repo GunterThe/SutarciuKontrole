@@ -32,6 +32,5 @@ public class Irasas
     [Required]
     [StringLength(100)]
     public string Pastas_kreiptis { get; set; }
-
     public ICollection<IrasasNaudotojas> Naudotojai { get; set; }
 }

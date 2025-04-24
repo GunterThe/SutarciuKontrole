@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { TextField, Button, Container, Typography, Paper, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { login } from "./api";
 
 const Login = () => {
   const [id, setId] = useState("");
@@ -8,9 +9,17 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (id === "1" && password === "2") {
+    /*
+    try {
+      const response = await login(id, password);
+      navigate("/home", { state: { username: response.username } });
+    } catch (err) {
+      setError(err.message || "An error occurred");
+    }
+    */
+    if (id === "id2801") {
       navigate("/home");
     } else {
       setError("Neteisingas id arba slaptažodis");

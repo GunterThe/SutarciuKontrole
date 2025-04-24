@@ -1,8 +1,10 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 public class IrasasNaudotojasController : ControllerBase
 {
     private readonly AppDbContext _context;
@@ -41,8 +43,14 @@ public class IrasasNaudotojasController : ControllerBase
 
     // POST: api/IrasasNaudotojas
     [HttpPost]
-    public async Task<ActionResult<IrasasNaudotojas>> CreateIrasasNaudotojas(IrasasNaudotojas irasasNaudotojas)
+    public async Task<ActionResult<IrasasNaudotojas>> CreateIrasasNaudotojas(int irasaId, string naudotojasId, bool adminas)
     {
+        IrasasNaudotojas irasasNaudotojas = new IrasasNaudotojas
+        {
+            IrasasId = irasaId,
+            NaudotojasId = naudotojasId,
+            Prekes_Adminas = adminas
+        };
         _context.IrasasNaudotojas.Add(irasasNaudotojas);
         await _context.SaveChangesAsync();
 
