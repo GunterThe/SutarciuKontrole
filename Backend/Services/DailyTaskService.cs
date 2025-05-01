@@ -4,26 +4,32 @@ using Microsoft.EntityFrameworkCore;
 public class DailyTaskService : BackgroundService
 {
     private readonly ILogger<DailyTaskService> _logger;
-    private readonly AppDbContext _context;
-    private readonly EmailService _emailService; 
+    private readonly IServiceScopeFactory _scopeFactory; // Use IServiceScopeFactory to create a scope
+    private readonly EmailService _emailService;
     private readonly TimeSpan _targetTime = new TimeSpan(8, 0, 0);
     private readonly IConfiguration _configuration;
 
-    public DailyTaskService(ILogger<DailyTaskService> logger, AppDbContext context, EmailService emailService,IConfiguration configuration)
+    public DailyTaskService(ILogger<DailyTaskService> logger, IServiceScopeFactory scopeFactory, EmailService emailService, IConfiguration configuration)
     {
-        _configuration = configuration;
         _logger = logger;
-        _context = context;
+        _scopeFactory = scopeFactory;
         _emailService = emailService;
+        _configuration = configuration;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        if (!_context.Naudotojas.Any())
+        using (var scope = _scopeFactory.CreateScope()) // Create a new scope
         {
-            _logger.LogInformation("Database is empty. Updating database with data from API.");
-            await UpdateDB();
+            var context = scope.ServiceProvider.GetRequiredService<AppDbContext>(); // Resolve AppDbContext
+
+            if (!context.Naudotojas.Any())
+            {
+                _logger.LogInformation("Database is empty. Updating database with data from API.");
+                await UpdateDB(context); // Pass the context to UpdateDB
+            }
         }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             var now = DateTime.Now;
@@ -40,17 +46,22 @@ public class DailyTaskService : BackgroundService
             if (!stoppingToken.IsCancellationRequested)
             {
                 _logger.LogInformation("Executing daily task...");
-                await UpdateDB();
-                await PerformTaskAsync();
+                using (var scope = _scopeFactory.CreateScope())
+                {
+                    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                    await UpdateDB(context);
+                    await PerformTaskAsync(context);
+                }
             }
         }
     }
-    private async Task UpdateDB()
+
+    private async Task UpdateDB(AppDbContext context)
     {
         try
         {
             using var httpClient = new HttpClient();
-            string url = _configuration["DBApi:url"]+_configuration["DBApi:key"];
+            string url = _configuration["DBApi:url"] + _configuration["DBApi:key"];
             var response = await httpClient.GetAsync(url);
 
             if (response.IsSuccessStatusCode)
@@ -68,13 +79,13 @@ public class DailyTaskService : BackgroundService
                         Gimimo_data = DateTime.Now,
                         Adminas = false
                     }).ToList();
-                
+
                 foreach (var n in naudotojas)
                 {
-                    var existingUser = await _context.Naudotojas.FirstOrDefaultAsync(u => u.Id == n.Id);
+                    var existingUser = await context.Naudotojas.FirstOrDefaultAsync(u => u.Id == n.Id);
                     if (existingUser == null)
                     {
-                        _context.Naudotojas.Add(n);
+                        context.Naudotojas.Add(n);
                     }
                     else if (int.Parse(n.El_pastas) < int.Parse(existingUser.El_pastas))
                     {
@@ -83,16 +94,16 @@ public class DailyTaskService : BackgroundService
                         existingUser.Pareigos = n.Pareigos;
                         existingUser.El_pastas = n.El_pastas;
 
-                        var irasai = await _context.Irasas
+                        var irasai = await context.Irasas
                             .Include(i => i.Naudotojai)
                             .Where(i => i.Naudotojai.Any(inu => inu.NaudotojasId == existingUser.Id && inu.Prekes_Adminas))
                             .ToListAsync();
                         foreach (var irasas in irasai)
-                            {
-                                var subject = $"{irasas.Pavadinimas} prekes administratorius pakeitė pareigas";
-                                var message = $"Sveiki,\n\nPranešame, kad {existingUser.Vardas} {existingUser.Pavarde} pakeitė pareigas ir dabar yra {existingUser.Pareigos}.\n\nGeros dienos!";
-                                await _emailService.SendEmailAsync(irasas.Pastas_kreiptis, subject, message);
-                            }
+                        {
+                            var subject = $"{irasas.Pavadinimas} prekes administratorius pakeitė pareigas";
+                            var message = $"Sveiki,\n\nPranešame, kad {existingUser.Vardas} {existingUser.Pavarde} pakeitė pareigas ir dabar yra {existingUser.Pareigos}.\n\nGeros dienos!";
+                            await _emailService.SendEmailAsync(irasas.Pastas_kreiptis, subject, message);
+                        }
                     }
                 }
             }
@@ -107,12 +118,12 @@ public class DailyTaskService : BackgroundService
         }
     }
 
-    private async Task PerformTaskAsync()
+    private async Task PerformTaskAsync(AppDbContext context)
     {
         try
         {
             var today = DateTime.Today;
-            var irasai = await _context.Irasas
+            var irasai = await context.Irasas
                 .Where(i => i.Kita_data.Date == today)
                 .ToListAsync();
 
@@ -146,7 +157,7 @@ public class DailyTaskService : BackgroundService
                 }
             }
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
             _logger.LogInformation("Daily task executed successfully.");
         }
         catch (Exception ex)
