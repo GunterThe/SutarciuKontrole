@@ -22,13 +22,13 @@ builder.Services.AddCors(options =>
 });
 
 // Register the email service
-//builder.Services.AddTransient<EmailService>();
+builder.Services.AddTransient<EmailService>();
 
 // Register LDAP authentication service
 builder.Services.AddScoped<ILdapAuthenticationService, LdapAuthenticationService>();
 
 // Register the background service
-//builder.Services.AddHostedService<DailyTaskService>();
+builder.Services.AddHostedService<DailyTaskService>();
 
 // Add controllers to the service container
 builder.Services.AddControllers()

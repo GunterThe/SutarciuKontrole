@@ -11,18 +11,11 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    /*
     try {
       const response = await login(id, password);
       navigate("/home", { state: { username: response.username } });
     } catch (err) {
       setError(err.message || "An error occurred");
-    }
-    */
-    if (id === "id2801") {
-      navigate("/home");
-    } else {
-      setError("Neteisingas id arba slaptažodis");
     }
   };
 

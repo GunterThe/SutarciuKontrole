@@ -38,20 +38,6 @@ function getUsernameFromToken(token) {
     }
 }
 
-export const checkNaudotojas = async () => {
-    try {
-        const token = localStorage.getItem("token");
-        const username = getUsernameFromToken(token);
-        const response = await apiClient.get(`/Naudotojas/${username}`);
-        return response.data;
-    } catch (error) {
-        if (error.response?.status === 404) {
-            // To do add integration for creating a new user using different database
-        }
-        throw error;
-    }
-};
-
 export const getIrasai = async () => {
     const response = await apiClient.get('/Irasas');
     return response.data;
@@ -63,6 +49,7 @@ export const getIrasasById = async (id, archived) => {
     });
     return response.data;
 }
+
 
 export const createIrasas = async (irasas, ids) => {
     try {
@@ -110,13 +97,7 @@ export const login = async (username, password) => {
     try {
         const response = await apiClient.post('/Auth/login', { username, password });
         const token = response.data?.token;
-        if (token) {
-            localStorage.setItem("token", token);
-            checkNaudotojas(username);
-            return response.data;
-        } else {
-            throw "Invalid response structure: token not found";
-        }
+        localStorage.setItem("token", token);
     } catch (error) {
         throw error.response?.data?.message || "Neteisingas slaptažodis arba prisijungimo vardas";
     }
@@ -125,4 +106,24 @@ export const login = async (username, password) => {
 export const logout = () => {
     localStorage.removeItem("token");
     window.location.href = "/login";
+};
+
+export const getIrasasNaudotojai = async (id) => {
+    try {
+        const response = await apiClient.get(`${id}/Naudotojai`);
+        return response.data;
+    } catch (error) {
+        console.error(`Error fetching Naudotojai for Irasas with ID ${id}:`, error);
+        throw error;
+    }
+};
+
+export const getAllNaudotojai = async () => {
+    try {
+        const response = await apiClient.get('/Naudotojas'); // Calls the GET: api/Naudotojas endpoint
+        return response.data; // Return the list of Naudotojai
+    } catch (error) {
+        console.error("Error fetching all Naudotojai:", error);
+        throw error;
+    }
 };

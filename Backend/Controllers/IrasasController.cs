@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Authorization;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
 public class IrasasController : ControllerBase
 {
     private readonly AppDbContext _context;

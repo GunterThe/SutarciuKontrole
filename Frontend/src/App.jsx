@@ -1,48 +1,126 @@
-import React, { useState } from "react";
-import { Container, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from "@mui/material";
+import React, { useState, useEffect } from "react";
+import { Container, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
+import jwtDecode from "jwt-decode";
+import { getIrasasById, getIrasasNaudotojai, createIrasas, getAllNaudotojai, updateIrasas } from "./api"; // Import the API functions
 
 const App = () => {
-  const navigate = useNavigate();
-  const [rows, setRows] = useState([
-    { id: 1, name: "Sutartis", nr: 1, startdate: "2025-01-01", enddate: "2025-12-31", man: "Jonas Jonaitis", email: "a@a.lt", days: "1", freq: 2 }
-  ]);
+  const token = localStorage.getItem("token");
+  const id = token ? jwtDecode(token).sub : null; // Decode the user ID from the token
 
+  const navigate = useNavigate();
+  const [rows, setRows] = useState([]); // Initialize rows as an empty array
   const [open, setOpen] = useState(false);
-  const [selectedRow, setSelectedRow] = useState(null); 
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [availableCustomers, setAvailableCustomers] = useState([]); // Store all Naudotojai for the Autocomplete
   const [newRow, setNewRow] = useState({
-    name: "", nr: "", startdate: "", enddate: "", man: "", email: "", days: "", freq: ""
+    name: "", nr: "", startdate: "", enddate: "", man: "", email: "", days: "", freq: "", customers: []
   });
+
+  useEffect(() => {
+    // Fetch Irasai for the user when the component mounts
+    const fetchIrasai = async () => {
+      try {
+        const irasai = await getIrasasById(id, false); // Fetch non-archived Irasai for the user
+
+        // Fetch Prekes_Adminas for each Irasas
+        const irasaiWithAdmins = await Promise.all(
+          irasai.map(async (irasas) => {
+            const naudotojai = await getIrasasNaudotojai(irasas.id); // Fetch Naudotojai for the Irasas
+            return { ...irasas, prekesAdminas: naudotojai }; // Add Prekes_Adminas to the Irasas
+          })
+        );
+
+        setRows(irasaiWithAdmins); // Set the fetched Irasai with Prekes_Adminas as rows
+      } catch (error) {
+        console.error("Error fetching Irasai or Prekes_Adminas:", error);
+      }
+    };
+
+    // Fetch all Naudotojai for the Autocomplete
+    const fetchNaudotojai = async () => {
+      try {
+        const naudotojai = await getAllNaudotojai();
+        setAvailableCustomers(naudotojai); // Set the fetched Naudotojai for the Autocomplete
+      } catch (error) {
+        console.error("Error fetching Naudotojai:", error);
+      }
+    };
+
+    if (id) {
+      fetchIrasai();
+      fetchNaudotojai();
+    }
+  }, [id]);
 
   const handleArchive = (id) => {
     const rowToArchive = rows.find(row => row.id === id);
     const updatedRows = rows.filter(row => row.id !== id);
-    
+
     setRows(updatedRows);
-  
+
     const archivedRecords = JSON.parse(localStorage.getItem("archivedRecords")) || [];
     localStorage.setItem("archivedRecords", JSON.stringify([...archivedRecords, rowToArchive]));
   };
-  
 
   const handleEdit = (id) => {
     const rowToEdit = rows.find(row => row.id === id);
     setSelectedRow(id);
-    setNewRow(rowToEdit); 
+    setNewRow(rowToEdit);
     setOpen(true);
   };
 
-  const handleSaveRow = () => {
-    if (selectedRow !== null) {
-      setRows(rows.map(row => (row.id === selectedRow ? { ...newRow, id: selectedRow } : row)));
-    } else {
-      setRows([...rows, { id: rows.length + 1, ...newRow }]);
+  const handleSaveRow = async () => {
+    try {
+        if (selectedRow !== null) {
+            // Update existing Irasas
+            const updatedIrasas = {
+                id: selectedRow,
+                name: newRow.name,
+                nr: newRow.nr,
+                startdate: newRow.startdate,
+                enddate: newRow.enddate,
+                man: newRow.man,
+                email: newRow.email,
+                days: newRow.days,
+                freq: newRow.freq
+            };
+
+            // Preserve the existing Prekių Adminai
+            const existingPrekesAdminas = rows.find(row => row.id === selectedRow)?.prekesAdminas || [];
+
+            // Call the API to update the Irasas (without modifying Prekių Adminai)
+            const updatedData = await updateIrasas(updatedIrasas);
+
+            // Update the row in the DataGrid while keeping the existing Prekių Adminai
+            setRows(rows.map(row => (row.id === selectedRow ? { ...updatedData, prekesAdminas: existingPrekesAdminas } : row)));
+        } else {
+            // Create a new Irasas
+            const irasas = {
+                name: newRow.name,
+                nr: newRow.nr,
+                startdate: newRow.startdate,
+                enddate: newRow.enddate,
+                man: newRow.man,
+                email: newRow.email,
+                days: newRow.days,
+                freq: newRow.freq
+            };
+
+            const customerIds = newRow.customers.map(customer => customer.id); // Extract IDs of selected customers
+            const createdIrasas = await createIrasas(irasas, customerIds); // Call the API to create the Irasas
+
+            setRows([...rows, { ...createdIrasas, prekesAdminas: newRow.customers }]); // Add the new Irasas to the rows
+        }
+
+        setOpen(false);
+        setSelectedRow(null);
+        setNewRow({ name: "", nr: "", startdate: "", enddate: "", man: "", email: "", days: "", freq: "", customers: [] });
+    } catch (error) {
+        console.error("Error saving Irasas:", error);
     }
-    setOpen(false);
-    setSelectedRow(null);
-    setNewRow({ name: "", nr: "", startdate: "", enddate: "", man: "", email: "", days: "", freq: "" });
-  };
+};
 
   const columns = [
     { field: "name", headerName: "Sutarties Pavadinimas", flex: 2 },
@@ -53,6 +131,34 @@ const App = () => {
     { field: "email", headerName: "Perspėti el. paštu  - adresas", flex: 2 },
     { field: "days", headerName: "Prieš kiek dienų iki pabaigos teikti priminimus", flex: 2 },
     { field: "freq", headerName: "Kas kiek dienų siųsti priminimą", flex: 2 },
+    {
+      field: "customers",
+      headerName: "Prekių administratoriai",
+      flex: 3,
+      renderCell: (params) => (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {params.row.customers.map((customer, index) => (
+            <div key={index}>
+              {customer.name} {customer.lastName}, {customer.birthdate}, {customer.occupation}
+            </div>
+          ))}
+        </div>
+      )
+    },
+    {
+      field: "prekesAdminas",
+      headerName: "Prekių Adminai",
+      flex: 3,
+      renderCell: (params) => (
+        <div style={{ display: "flex", flexDirection: "column" }}>
+          {params.row.prekesAdminas.map((admin, index) => (
+            <div key={index}>
+              {admin.vardas} {admin.pavarde}, {admin.pareigos}
+            </div>
+          ))}
+        </div>
+      )
+    },
     {
       field: "actions",
       headerName: "Veiksmai",
@@ -68,33 +174,39 @@ const App = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 7 }}>
-      <Button 
-      variant="contained" 
-      color="error" 
-      sx={{ position: "absolute", top: 20, right: 20 }}
-      onClick={() => navigate("/")}
+      <Button
+        variant="contained"
+        color="error"
+        sx={{ position: "absolute", top: 20, right: 20 }}
+        onClick={() => navigate("/")}
       >
-      Atsijungti
+        Atsijungti
       </Button>
-      <Typography variant="h4" gutterBottom sx={{ ml: -60}}>Sutarčių įrašai</Typography>
-      <Button variant="contained" color="success" sx={{ mb: 2, ml: -60 }} onClick={() => { setOpen(true); setSelectedRow(null); 
-      setNewRow({ name: "", nr: "", startdate: "", enddate: "", man: "", email: "", days: "", freq: "" });
-  }}
->
-  Pridėti naują įrašą
-</Button>
-<Button variant="contained" color="secondary" sx={{ mb: 2, ml: 2 }} onClick={() => navigate("/archived")}>
-  Archyvuoti įrašai
-</Button>
+      <Typography variant="h4" gutterBottom sx={{ ml: -60 }}>Sutarčių įrašai</Typography>
+      <Button variant="contained" color="success" sx={{ mb: 2, ml: -60 }} onClick={() => {
+        setOpen(true);
+        setSelectedRow(null);
+        setNewRow({ name: "", nr: "", startdate: "", enddate: "", man: "", email: "", days: "", freq: "", customers: [] });
+      }}
+      >
+        Pridėti naują įrašą
+      </Button>
+      <Button variant="contained" color="secondary" sx={{ mb: 2, ml: 2 }} onClick={() => navigate("/archived")}>
+        Archyvuoti įrašai
+      </Button>
       <Box sx={{ height: 400, width: "190%", ml: -60 }}>
-        <DataGrid rows={rows} columns={columns} pageSize={7} 
+        <DataGrid
+          rows={rows}
+          columns={columns}
+          pageSize={7}
+          getRowHeight={() => 'auto'} // Dynamically adjust row height
           localeText={{
             noRowsLabel: "Nėra duomenų",
             toolbarDensity: "Eilutės per puslapį",
             MuiTablePagination: {
               labelRowsPerPage: "Eilučių per puslapį",
             }
-          }} 
+          }}
         />
       </Box>
       <Dialog open={open} onClose={() => setOpen(false)}>
@@ -106,8 +218,34 @@ const App = () => {
           <TextField label="Pabaigos data" fullWidth margin="dense" type="date" value={newRow.enddate} InputLabelProps={{ shrink: true }} onChange={(e) => setNewRow({ ...newRow, enddate: e.target.value })} />
           <TextField label="Atsakingas už sutarties vykdymą" fullWidth margin="dense" value={newRow.man} onChange={(e) => setNewRow({ ...newRow, man: e.target.value })} />
           <TextField label="Perspėti el. paštu  - adresas" fullWidth margin="dense" type="email" value={newRow.email} onChange={(e) => setNewRow({ ...newRow, email: e.target.value })} />
-          <TextField label="Prieš kiek dienų iki pabaigos teikti priminimus" fullWidth margin="dense" type="number" value={newRow.days} onChange={(e) => setNewRow({ ...newRow, days: e.target.value })} />
-          <TextField label="Kas kiek dienų siųsti priminimą" fullWidth margin="dense" type="number" value={newRow.freq} onChange={(e) => setNewRow({ ...newRow, freq: e.target.value })} />
+          <TextField
+            label="Prieš kiek dienų iki pabaigos teikti priminimus"
+            fullWidth
+            margin="dense"
+            type="number"
+            value={newRow.days}
+            onChange={(e) => {
+              setNewRow({ ...newRow, days: e.target.value });
+            }}
+          />
+          <TextField
+            label="Kas kiek dienų siųsti priminimą"
+            fullWidth
+            margin="dense"
+            type="number"
+            value={newRow.freq}
+            onChange={(e) => {
+              setNewRow({ ...newRow, freq: e.target.value });
+            }}
+          />
+          <Autocomplete
+            multiple
+            options={availableCustomers}
+            getOptionLabel={(option) => `${option.vardas} ${option.pavarde}, ${option.pareigos}`}
+            value={newRow.customers}
+            onChange={(event, newValue) => setNewRow({ ...newRow, customers: newValue })}
+            renderInput={(params) => <TextField {...params} label="Prekių administratoriai" fullWidth margin="dense" />}
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpen(false)}>Atšaukti</Button>
