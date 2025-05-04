@@ -34,6 +34,22 @@ public class IrasasController : ControllerBase
         return irasas;
     }
 
+    // POST: api/Irasas/{id}/Archive
+    [HttpPost("{id}/Archive")]
+    public async Task<ActionResult<Irasas>> ArchiveIrasas(int id)
+    {
+        var irasas = await _context.Irasas.FindAsync(id);
+        if(irasas == null)
+        {
+            return NotFound();
+        }
+
+        irasas.Archyvuotas = true;
+        _context.Entry(irasas).State = EntityState.Modified;
+        await _context.SaveChangesAsync();
+        return irasas;
+    }
+
     // GET: api/Irasas/{id}
     [HttpGet("{id}/Naudotojai")]
     public async Task<ActionResult<Irasas>> GetIrasasNaudotojai(int id)

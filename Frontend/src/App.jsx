@@ -30,11 +30,20 @@ const App = () => {
         // Fetch Prekes_Adminas for each Irasas
         const irasaiWithAdmins = await Promise.all(
           irasai.map(async (irasas) => {
-            console.log(irasas);
+            const names = [];
+            console.log("Iraso info: ", irasas.irasas);
             const naudotojai = await getIrasasNaudotojai(irasas.irasas.id); // Fetch Naudotojai for the Irasas
-            return { ...irasas, prekesAdminas: naudotojai }; // Add Prekes_Adminas to the Irasas
+            naudotojai.$values.map((naudotojas) => {
+              names.push(naudotojas.vardas + " " + naudotojas.pavarde + " " + naudotojas.pareigos); 
+            }
+            )
+            console.log(names);
+            return { id: irasas.irasas.id, name: irasas.irasas.pavadinimas, nr: irasas.irasas.id_dokumento, startdate: irasas.irasas.isigaliojimo_data, 
+              enddate: irasas.irasas.pabaigos_data, man: " ", email: irasas.irasas.pastas_kreiptis,
+              days: irasas.irasas.dienos_pries, freq: irasas.irasas.dienu_daznumas, prekesAdminas: names }; // Add Prekes_Adminas to the Irasas
           })
         );
+
 
         setRows(irasaiWithAdmins); // Set the fetched Irasai with Prekes_Adminas as rows
       } catch (error) {
@@ -133,24 +142,9 @@ const App = () => {
     { field: "nr", headerName: "DBSIS registracijos Nr.", flex: 2 },
     { field: "startdate", headerName: "Įsigaliojimo data", flex: 2 },
     { field: "enddate", headerName: "Pabaigos data", flex: 2 },
-    { field: "man", headerName: "Atsakingas už sutarties vykdymą", flex: 2 },
     { field: "email", headerName: "Perspėti el. paštu  - adresas", flex: 2 },
     { field: "days", headerName: "Prieš kiek dienų iki pabaigos teikti priminimus", flex: 2 },
     { field: "freq", headerName: "Kas kiek dienų siųsti priminimą", flex: 2 },
-    {
-      field: "customers",
-      headerName: "Prekių administratoriai",
-      flex: 3,
-      renderCell: (params) => (
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          {params.row.customers.map((customer, index) => (
-            <div key={index}>
-              {customer.name} {customer.lastName}, {customer.birthdate}, {customer.occupation}
-            </div>
-          ))}
-        </div>
-      )
-    },
     {
       field: "prekesAdminas",
       headerName: "Prekių Adminai",
@@ -159,7 +153,7 @@ const App = () => {
         <div style={{ display: "flex", flexDirection: "column" }}>
           {params.row.prekesAdminas.map((admin, index) => (
             <div key={index}>
-              {admin.vardas} {admin.pavarde}, {admin.pareigos}
+              {admin}
             </div>
           ))}
         </div>
@@ -201,7 +195,7 @@ const App = () => {
         Archyvuoti įrašai
       </Button>
       <Box sx={{ height: 400, width: "190%", ml: -60 }}>
-        <DataGrid
+          <DataGrid getRowId={(row) => row.id}
           rows={rows}
           columns={columns}
           pageSize={7}
