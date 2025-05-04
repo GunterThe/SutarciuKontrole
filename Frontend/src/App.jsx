@@ -68,14 +68,20 @@ const App = () => {
     }
   }, [id]);
 
-  const handleArchive = (id) => {
-    const rowToArchive = rows.find(row => row.id === id);
-    const updatedRows = rows.filter(row => row.id !== id);
+  const handleArchive = async (id) => {
+    try {
+      await archiveIrasas(id);
+      
+      const updatedRows = rows.filter(row => row.id !== id);
+      setRows(updatedRows);
 
-    setRows(updatedRows);
+      const rowToArchive = rows.find(row => row.id === id);
+      const archivedRecords = JSON.parse(localStorage.getItem("archivedRecords")) || [];
+      localStorage.setItem("archivedRecords", JSON.stringify([...archivedRecords, rowToArchive]));
 
-    const archivedRecords = JSON.parse(localStorage.getItem("archivedRecords")) || [];
-    localStorage.setItem("archivedRecords", JSON.stringify([...archivedRecords, rowToArchive]));
+    } catch (error) {
+      console.error("Error archiving record:", error);
+    }
   };
 
   const handleEdit = (id) => {

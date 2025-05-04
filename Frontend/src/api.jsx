@@ -28,6 +28,16 @@ apiClient.interceptors.response.use(
     }
 );
 
+export const archiveIrasas = async (id) => {
+    const response = await apiClient.post(`api/Irasas/${id}/Archive`);
+    
+    if (!response.ok) {
+      throw new Error('Failed to archive record');
+    }
+    
+    return await response.json();
+  };
+
 function getUsernameFromToken(token) {
     try {
         const decodedToken = jwtDecode(token);
