@@ -15,12 +15,32 @@ const ArchivedRecords = () => {
   useEffect(() => {
     // Fetch archived records for the user
     const fetchArchivedRecords = async () => {
-      try {
-        const archivedRecords = await getIrasasById(id, true); // Fetch archived records (archived = true)
-        setArchivedRows(archivedRecords); // Set the fetched records to the state
-      } catch (error) {
-        console.error("Error fetching archived records:", error);
-      }
+          try {
+            const response = await getIrasasById(id, false); // Fetch non-archived Irasai for the user
+            const irasai = response.$values || [];
+    
+            // Fetch Prekes_Adminas for each Irasas
+            const irasaiWithAdmins = await Promise.all(
+              irasai.map(async (irasas) => {
+                const names = [];
+                console.log("Iraso info: ", irasas.irasas);
+                const naudotojai = await getIrasasNaudotojai(irasas.irasas.id); // Fetch Naudotojai for the Irasas
+                naudotojai.$values.map((naudotojas) => {
+                  names.push(naudotojas.vardas + " " + naudotojas.pavarde + " " + naudotojas.pareigos); 
+                }
+                )
+                console.log(names);
+                return { id: irasas.irasas.id, name: irasas.irasas.pavadinimas, nr: irasas.irasas.id_dokumento, startdate: irasas.irasas.isigaliojimo_data, 
+                  enddate: irasas.irasas.pabaigos_data, man: " ", email: irasas.irasas.pastas_kreiptis,
+                  days: irasas.irasas.dienos_pries, freq: irasas.irasas.dienu_daznumas, prekesAdminas: names }; // Add Prekes_Adminas to the Irasas
+              })
+            );
+    
+    
+            setRows(irasaiWithAdmins); // Set the fetched Irasai with Prekes_Adminas as rows
+          } catch (error) {
+            console.error("Error fetching Irasai or Prekes_Adminas:", error);
+          }
     };
 
     if (id) {
@@ -33,17 +53,18 @@ const ArchivedRecords = () => {
     { field: "nr", headerName: "DBSIS registracijos Nr.", flex: 2 },
     { field: "startdate", headerName: "Įsigaliojimo data", flex: 2 },
     { field: "enddate", headerName: "Pabaigos data", flex: 2 },
-    { field: "man", headerName: "Atsakingas už sutarties vykdymą", flex: 2 },
-    { field: "email", headerName: "Perspėti el. paštu", flex: 2 },
+    { field: "email", headerName: "Perspėti el. paštu  - adresas", flex: 2 },
+    { field: "days", headerName: "Prieš kiek dienų iki pabaigos teikti priminimus", flex: 2 },
+    { field: "freq", headerName: "Kas kiek dienų siųsti priminimą", flex: 2 },
     {
-      field: "customers",
-      headerName: "Prekių administratoriai",
+      field: "prekesAdminas",
+      headerName: "Prekių Adminai",
       flex: 3,
       renderCell: (params) => (
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {params.row.customers.map((customer, index) => (
+          {params.row.prekesAdminas.map((admin, index) => (
             <div key={index}>
-              {customer.name} {customer.lastName}, {customer.birthdate}, {customer.occupation}
+              {admin}
             </div>
           ))}
         </div>
@@ -58,7 +79,7 @@ const ArchivedRecords = () => {
         Grįžti
       </Button>
       <Box sx={{ height: 400, width: "100%" }}>
-        <DataGrid
+        <DataGrid getRowId={(row) => row.id}
           rows={archivedRows}
           columns={columns}
           pageSize={7}
