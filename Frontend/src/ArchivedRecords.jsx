@@ -32,7 +32,7 @@ const ArchivedRecords = () => {
                 console.log(names);
                 return { id: irasas.irasas.id, name: irasas.irasas.pavadinimas, nr: irasas.irasas.id_dokumento, startdate: irasas.irasas.isigaliojimo_data, 
                   enddate: irasas.irasas.pabaigos_data, man: " ", email: irasas.irasas.pastas_kreiptis,
-                  days: irasas.irasas.dienos_pries, freq: irasas.irasas.dienu_daznumas, prekesAdminas: names }; // Add Prekes_Adminas to the Irasas
+                  prekesAdminas: names }; // Add Prekes_Adminas to the Irasas
               })
             );
     
@@ -54,8 +54,6 @@ const ArchivedRecords = () => {
     { field: "startdate", headerName: "Įsigaliojimo data", flex: 2 },
     { field: "enddate", headerName: "Pabaigos data", flex: 2 },
     { field: "email", headerName: "Perspėti el. paštu  - adresas", flex: 2 },
-    { field: "days", headerName: "Prieš kiek dienų iki pabaigos teikti priminimus", flex: 2 },
-    { field: "freq", headerName: "Kas kiek dienų siųsti priminimą", flex: 2 },
     {
       field: "prekesAdminas",
       headerName: "Prekių Adminai",
