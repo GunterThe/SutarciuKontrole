@@ -29,7 +29,7 @@ apiClient.interceptors.response.use(
 );
 
 export const archiveIrasas = async (id) => {
-    const response = await apiClient.post(`api/Irasas/${id}/Archive`);
+    const response = await apiClient.post(`Irasas/${id}/Archive`);
     
     if (!response.ok) {
       throw new Error('Failed to archive record');
@@ -53,9 +53,9 @@ export const getIrasai = async () => {
     return response.data;
 };
 
-export const getIrasasById = async (id, archived) => {
+export const getIrasasById = async (id, Archyvuotas) => {
     const response = await apiClient.get(`/Naudotojas/${id}/Irasai`, {
-        params: { archived }
+        params: { Archyvuotas }
     });
     return response.data;
 }

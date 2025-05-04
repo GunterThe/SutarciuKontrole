@@ -3,7 +3,7 @@ import { Container, Typography, Button, Box } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import { getIrasasById } from "./api"; // Import the API function to fetch archived records
+import { getIrasasById, getIrasasNaudotojai } from "./api"; // Import the API function to fetch archived records
 
 const ArchivedRecords = () => {
   const token = localStorage.getItem("token");
@@ -16,7 +16,7 @@ const ArchivedRecords = () => {
     // Fetch archived records for the user
     const fetchArchivedRecords = async () => {
           try {
-            const response = await getIrasasById(id, false); // Fetch non-archived Irasai for the user
+            const response = await getIrasasById(id, true); // Fetch non-archived Irasai for the user
             const irasai = response.$values || [];
     
             // Fetch Prekes_Adminas for each Irasas
@@ -37,7 +37,7 @@ const ArchivedRecords = () => {
             );
     
     
-            setRows(irasaiWithAdmins); // Set the fetched Irasai with Prekes_Adminas as rows
+            setArchivedRows(irasaiWithAdmins); // Set the fetched Irasai with Prekes_Adminas as rows
           } catch (error) {
             console.error("Error fetching Irasai or Prekes_Adminas:", error);
           }

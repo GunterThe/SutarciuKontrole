@@ -35,7 +35,7 @@ public class IrasasController : ControllerBase
     }
 
     // PATCH: api/Irasas/{id}/Archive
-    [HttpPatch("{id}/Archive")]
+    [HttpPost("{id}/Archive")]
     public async Task<ActionResult<Irasas>> ArchiveIrasas(int id)
     {
         var irasas = await _context.Irasas.FindAsync(id);

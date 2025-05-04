@@ -4,7 +4,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import { Irasas } from "./models/Irasas"
-import { getIrasasById, getIrasasNaudotojai, createIrasas, getAllNaudotojai, updateIrasas } from "./api"; // Import the API functions
+import { getIrasasById, getIrasasNaudotojai, createIrasas, getAllNaudotojai, updateIrasas, archiveIrasas } from "./api"; // Import the API functions
 
 const App = () => {
   const token = localStorage.getItem("token");
@@ -74,10 +74,6 @@ const App = () => {
       
       const updatedRows = rows.filter(row => row.id !== id);
       setRows(updatedRows);
-
-      const rowToArchive = rows.find(row => row.id === id);
-      const archivedRecords = JSON.parse(localStorage.getItem("archivedRecords")) || [];
-      localStorage.setItem("archivedRecords", JSON.stringify([...archivedRecords, rowToArchive]));
 
     } catch (error) {
       console.error("Error archiving record:", error);
@@ -171,7 +167,7 @@ const App = () => {
       flex: 3,
       renderCell: (params) => (
         <>
-          <Button variant="contained" color="primary" size="small" onClick={() => handleEdit(params.row.id)}>Redaguoti</Button>
+          <Button variant="contained" color="primary" size="small" /*onClick={() => handleEdit(params.row.id)}*/>Redaguoti</Button>
           <Button variant="contained" color="error" size="small" onClick={() => handleArchive(params.row.id)} sx={{ ml: 1 }}>Archyvuoti</Button>
         </>
       )
@@ -222,7 +218,6 @@ const App = () => {
           <TextField label="DBSIS registracijos Nr." fullWidth margin="dense" value={newRow.nr} onChange={(e) => setNewRow({ ...newRow, nr: e.target.value })} />
           <TextField label="Įsigaliojimo data" fullWidth margin="dense" type="date" value={newRow.startdate} InputLabelProps={{ shrink: true }} onChange={(e) => setNewRow({ ...newRow, startdate: e.target.value })} />
           <TextField label="Pabaigos data" fullWidth margin="dense" type="date" value={newRow.enddate} InputLabelProps={{ shrink: true }} onChange={(e) => setNewRow({ ...newRow, enddate: e.target.value })} />
-          <TextField label="Atsakingas už sutarties vykdymą" fullWidth margin="dense" value={newRow.man} onChange={(e) => setNewRow({ ...newRow, man: e.target.value })} />
           <TextField label="Perspėti el. paštu  - adresas" fullWidth margin="dense" type="email" value={newRow.email} onChange={(e) => setNewRow({ ...newRow, email: e.target.value })} />
           <TextField
             label="Prieš kiek dienų iki pabaigos teikti priminimus"
