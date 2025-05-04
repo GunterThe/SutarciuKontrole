@@ -55,11 +55,15 @@ export const createIrasas = async (irasas, ids) => {
     try {
         const token = localStorage.getItem("token");
         const username = getUsernameFromToken(token);
-        const response = await apiClient.post('/Irasas', irasas);
+        const response = await apiClient.post('/Irasas', irasas, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
 
         await apiClient.post(`/IrasasNaudotojas`, null, {
             params: {
-                irasaId: response.data.Id,
+                irasaId: response.data.id,
                 naudotojasId: username,
                 adminas: false,
             },
@@ -68,7 +72,7 @@ export const createIrasas = async (irasas, ids) => {
         const userPromises = ids.map((id) =>
             apiClient.post(`/IrasasNaudotojas`, null, {
                 params: {
-                    irasaId: response.data.Id,
+                    irasaId: response.data.id,
                     naudotojasId: id,
                     adminas: true,
                 },
@@ -115,7 +119,7 @@ export const logout = () => {
 
 export const getIrasasNaudotojai = async (id) => {
     try {
-        const response = await apiClient.get(`${id}/Naudotojai`);
+        const response = await apiClient.get(`Irasas/${id}/Naudotojai`);
         return response.data;
     } catch (error) {
         console.error(`Error fetching Naudotojai for Irasas with ID ${id}:`, error);

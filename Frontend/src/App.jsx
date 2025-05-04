@@ -25,13 +25,13 @@ const App = () => {
     const fetchIrasai = async () => {
       try {
         const response = await getIrasasById(id, false); // Fetch non-archived Irasai for the user
-        console.log("API Response: ", response);
         const irasai = response.$values || [];
 
         // Fetch Prekes_Adminas for each Irasas
         const irasaiWithAdmins = await Promise.all(
           irasai.map(async (irasas) => {
-            const naudotojai = await getIrasasNaudotojai(irasas.id); // Fetch Naudotojai for the Irasas
+            console.log(irasas);
+            const naudotojai = await getIrasasNaudotojai(irasas.irasas.id); // Fetch Naudotojai for the Irasas
             return { ...irasas, prekesAdminas: naudotojai }; // Add Prekes_Adminas to the Irasas
           })
         );
@@ -105,11 +105,12 @@ const App = () => {
             const irasas = new Irasas ({
                 id_dokumento: newRow.nr,
                 pavadinimas: newRow.name,
-                isigaliojimo_data: newRow.startdate,
-                pabaigos_data: newRow.enddate,
-                dienos_pries: newRow.days || "0",
-                dienu_daznumas: newRow.freq || "0",
+                isigaliojimo_data: new Date(newRow.startdate).toISOString(),
+                pabaigos_data: new Date(newRow.enddate).toISOString(),
+                dienos_pries: parseInt(newRow.days) || "0",
+                dienu_daznumas: parseInt(newRow.freq) || "0",
                 pastas_kreiptis: newRow.email,
+                archyvuotas: false,
                 naudotojai: []
             });
 

@@ -61,9 +61,14 @@ public class IrasasController : ControllerBase
 
     // POST: api/Irasas
     [HttpPost]
-    public async Task<ActionResult<Irasas>> CreateIrasas(Irasas irasas)
+    public async Task<ActionResult<Irasas>> CreateIrasas([FromBody] Irasas irasas)
     {
+        irasas.Id = 0;
         Console.WriteLine(irasas);
+        if(irasas == null)
+        {
+            return BadRequest("Irasas object is null");
+        }
         if (irasas.Dienos_pries > 0){
             irasas.Kita_data = irasas.Pabaigos_data.Subtract(TimeSpan.FromDays(irasas.Dienos_pries));
         }
