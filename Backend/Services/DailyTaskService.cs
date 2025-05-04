@@ -78,26 +78,30 @@ public class DailyTaskService : BackgroundService
                         Id = x.Element("vardas").Value + x.Element("pavarde").Value.Trim(),
                         Gimimo_data = DateTime.Now,
                         Adminas = false
-                    }).ToList();
+                    }).GroupBy(n => n.Id)
+                    .Select(g => g.OrderByDescending(n => int.Parse(n.El_pastas)).First())
+                    .ToList();
 
                 foreach (var n in naudotojas)
                 {
-                    var existingUser = await context.Naudotojas.FirstOrDefaultAsync(u => u.Id == n.Id);
+                    var existingUser = await context.Naudotojas
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == n.Id);
                     if (existingUser == null)
                     {
                         context.Naudotojas.Add(n);
                     }
                     else if (int.Parse(n.El_pastas) < int.Parse(existingUser.El_pastas))
                     {
-                        existingUser.Vardas = n.Vardas;
-                        existingUser.Pavarde = n.Pavarde;
-                        existingUser.Pareigos = n.Pareigos;
-                        existingUser.El_pastas = n.El_pastas;
+                        context.Entry(existingUser).State = EntityState.Detached;
+                        context.Naudotojas.Attach(n);
+                        context.Entry(n).State = EntityState.Modified;
 
                         var irasai = await context.Irasas
                             .Include(i => i.Naudotojai)
                             .Where(i => i.Naudotojai.Any(inu => inu.NaudotojasId == existingUser.Id && inu.Prekes_Adminas))
                             .ToListAsync();
+
                         foreach (var irasas in irasai)
                         {
                             var subject = $"{irasas.Pavadinimas} prekes administratorius pakeitė pareigas";
@@ -106,6 +110,8 @@ public class DailyTaskService : BackgroundService
                         }
                     }
                 }
+
+                await context.SaveChangesAsync();
             }
             else
             {

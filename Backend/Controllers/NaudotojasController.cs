@@ -15,9 +15,18 @@ public class NaudotojasController : ControllerBase
 
     // GET: api/Naudotojas
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<Naudotojas>>> GetNaudotojas()
+    public async Task<ActionResult<IEnumerable<object>>> GetNaudotojas()
     {
-        return await _context.Naudotojas.ToListAsync();
+        return await _context.Naudotojas
+        .Select(n => new
+        {
+            n.Id,
+            n.Vardas,
+            n.Pavarde,
+            n.Pareigos
+        }
+        )
+        .ToListAsync();
     }
 
     // GET: api/Naudotojas/{id}

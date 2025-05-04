@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { TextField, Button, Container, Typography, Paper, Box } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { login } from "./api";
+import { jwtDecode } from "jwt-decode";
+
 
 const Login = () => {
   const [id, setId] = useState("");
@@ -11,10 +13,17 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
     try {
+      console.log("Attempting to login with ID:", id);
       const response = await login(id, password);
-      navigate("/home", { state: { username: response.username } });
+
+      if (response.status === 200) {
+        console.log("Loginas suveikė");
+        navigate("/home");
+      }
     } catch (err) {
+      console.error(err);
       setError(err.message || "An error occurred");
     }
   };

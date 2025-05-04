@@ -157,7 +157,8 @@ public class AuthController : ControllerBase
             if (naudotojas != null) {
                 var token = GenerateJwtToken(name);
                 return Ok(new 
-                { 
+                {
+                    status = 200, 
                     message = "Prisijungta sėkmingai",
                     token = token 
                 });

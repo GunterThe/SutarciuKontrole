@@ -2,12 +2,14 @@ import React, { useState, useEffect } from "react";
 import { Container, Typography, Button, Box, Dialog, DialogTitle, DialogContent, DialogActions, TextField, Autocomplete } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
+import { Irasas } from "./models/Irasas"
 import { getIrasasById, getIrasasNaudotojai, createIrasas, getAllNaudotojai, updateIrasas } from "./api"; // Import the API functions
 
 const App = () => {
   const token = localStorage.getItem("token");
   const id = token ? jwtDecode(token).sub : null; // Decode the user ID from the token
+  console.log(id);
 
   const navigate = useNavigate();
   const [rows, setRows] = useState([]); // Initialize rows as an empty array
@@ -22,7 +24,9 @@ const App = () => {
     // Fetch Irasai for the user when the component mounts
     const fetchIrasai = async () => {
       try {
-        const irasai = await getIrasasById(id, false); // Fetch non-archived Irasai for the user
+        const response = await getIrasasById(id, false); // Fetch non-archived Irasai for the user
+        console.log("API Response: ", response);
+        const irasai = response.$values || [];
 
         // Fetch Prekes_Adminas for each Irasas
         const irasaiWithAdmins = await Promise.all(
@@ -41,7 +45,8 @@ const App = () => {
     // Fetch all Naudotojai for the Autocomplete
     const fetchNaudotojai = async () => {
       try {
-        const naudotojai = await getAllNaudotojai();
+        const response2 = await getAllNaudotojai();
+        const naudotojai = response2.$values || [];
         setAvailableCustomers(naudotojai); // Set the fetched Naudotojai for the Autocomplete
       } catch (error) {
         console.error("Error fetching Naudotojai:", error);
@@ -97,16 +102,16 @@ const App = () => {
             setRows(rows.map(row => (row.id === selectedRow ? { ...updatedData, prekesAdminas: existingPrekesAdminas } : row)));
         } else {
             // Create a new Irasas
-            const irasas = {
-                name: newRow.name,
-                nr: newRow.nr,
-                startdate: newRow.startdate,
-                enddate: newRow.enddate,
-                man: newRow.man,
-                email: newRow.email,
-                days: newRow.days,
-                freq: newRow.freq
-            };
+            const irasas = new Irasas ({
+                id_dokumento: newRow.nr,
+                pavadinimas: newRow.name,
+                isigaliojimo_data: newRow.startdate,
+                pabaigos_data: newRow.enddate,
+                dienos_pries: newRow.days || "0",
+                dienu_daznumas: newRow.freq || "0",
+                pastas_kreiptis: newRow.email,
+                naudotojai: []
+            });
 
             const customerIds = newRow.customers.map(customer => customer.id); // Extract IDs of selected customers
             const createdIrasas = await createIrasas(irasas, customerIds); // Call the API to create the Irasas

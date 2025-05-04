@@ -1,7 +1,7 @@
 import axios from 'axios';
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 
-const API_BASE_URL = 'https://localhost:5046/api';
+const API_BASE_URL = 'http://localhost:5046/api';
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
@@ -22,7 +22,7 @@ apiClient.interceptors.response.use(
     (error) => {
         if (error.response?.status === 401) {
             localStorage.removeItem("token");
-            window.location.href = "/login";
+            window.location.href = "/";
         }
         return Promise.reject(error);
     }
@@ -44,7 +44,7 @@ export const getIrasai = async () => {
 };
 
 export const getIrasasById = async (id, archived) => {
-    const response = await apiClient.get(`${id}/Irasai`, {
+    const response = await apiClient.get(`/Naudotojas/${id}/Irasai`, {
         params: { archived }
     });
     return response.data;
@@ -96,8 +96,13 @@ export const updateIrasas = async (irasas) => {
 export const login = async (username, password) => {
     try {
         const response = await apiClient.post('/Auth/login', { username, password });
+        console.log(response);
         const token = response.data?.token;
+        if(!token) {
+            throw new Error("Invalid response from server");
+        }
         localStorage.setItem("token", token);
+        return response.data;
     } catch (error) {
         throw error.response?.data?.message || "Neteisingas slaptažodis arba prisijungimo vardas";
     }
@@ -105,7 +110,7 @@ export const login = async (username, password) => {
 
 export const logout = () => {
     localStorage.removeItem("token");
-    window.location.href = "/login";
+    window.location.href = "/";
 };
 
 export const getIrasasNaudotojai = async (id) => {

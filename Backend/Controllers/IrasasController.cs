@@ -48,13 +48,22 @@ public class IrasasController : ControllerBase
             return NotFound();
         }
 
-        return Ok(irasas.Naudotojai);
+        var Naudotojai = irasas.Naudotojai.Select(n => new
+        {
+            n.Naudotojas.Id,
+            n.Naudotojas.Vardas,
+            n.Naudotojas.Pavarde,
+            n.Naudotojas.Pareigos
+        });
+
+        return Ok(Naudotojai);
     }
 
     // POST: api/Irasas
     [HttpPost]
     public async Task<ActionResult<Irasas>> CreateIrasas(Irasas irasas)
     {
+        Console.WriteLine(irasas);
         if (irasas.Dienos_pries > 0){
             irasas.Kita_data = irasas.Pabaigos_data.Subtract(TimeSpan.FromDays(irasas.Dienos_pries));
         }

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Container, Typography, Button, Box } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import { useNavigate } from "react-router-dom";
-import jwtDecode from "jwt-decode";
+import { jwtDecode } from "jwt-decode";
 import { getIrasasById } from "./api"; // Import the API function to fetch archived records
 
 const ArchivedRecords = () => {
