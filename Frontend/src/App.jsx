@@ -72,8 +72,7 @@ const App = () => {
     try {
       await archiveIrasas(id);
       
-      const updatedRows = rows.filter(row => row.id !== id);
-      setRows(updatedRows);
+      window.location.reload();
 
     } catch (error) {
       console.error("Error archiving record:", error);
@@ -128,7 +127,7 @@ const App = () => {
             const customerIds = newRow.customers.map(customer => customer.id); // Extract IDs of selected customers
             const createdIrasas = await createIrasas(irasas, customerIds); // Call the API to create the Irasas
 
-            setRows([...rows, { ...createdIrasas, prekesAdminas: newRow.customers }]); // Add the new Irasas to the rows
+            window.location.reload();
         }
 
         setOpen(false);

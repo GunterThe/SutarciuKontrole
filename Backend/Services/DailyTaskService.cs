@@ -69,6 +69,7 @@ public class DailyTaskService : BackgroundService
                 var xmlContent = await response.Content.ReadAsStringAsync();
                 var xmlDoc = XDocument.Parse(xmlContent);
                 var naudotojas = xmlDoc.Descendants("buh_irasas")
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Element("pareigos")?.Value) && x.Element("pareigos").Value.Trim().ToLower() != "atleistieji")
                     .Select(x => new Naudotojas
                     {
                         El_pastas = x.Element("tableio_nr").Value.Trim(),
